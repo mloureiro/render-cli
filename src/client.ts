@@ -14,6 +14,13 @@ export interface Service {
   slug?: string;
 }
 
+export interface Workspace {
+  id: string;
+  name: string;
+  email?: string;
+  type?: string;
+}
+
 export interface Deploy {
   id: string;
   status?: string;
@@ -46,6 +53,7 @@ export interface RenderClient {
   getService(serviceId: string): Promise<Service | undefined>;
   findServicesByName(name: string): Promise<Service[]>;
   triggerDeploy(serviceId: string): Promise<Deploy | undefined>;
+  listWorkspaces(): Promise<Workspace[]>;
 }
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -105,6 +113,8 @@ export function createClient(options: ClientOptions): RenderClient {
     `/services/${encodeURIComponent(serviceId)}/env-vars/${encodeURIComponent(key)}`;
 
   return {
+    listWorkspaces: () => paginate<Workspace, "owner">("/owners", "owner"),
+
     listEnvVars: (serviceId) =>
       paginate<EnvVar, "envVar">(`/services/${encodeURIComponent(serviceId)}/env-vars`, "envVar"),
 

@@ -1,12 +1,12 @@
 {
-  "name": "render-env-cli",
+  "name": "rendercli",
   "version": "0.1.0",
-  "description": "Manage environment variables on Render.com services from the command line",
+  "description": "Manage Render.com services from the command line: environment variables, credentials setup and more",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "render-env-cli": "dist/cli.js",
-    "render-env": "dist/cli.js"
+    "render-cli": "dist/cli.js",
+    "rendercli": "dist/cli.js"
   },
   "files": [
     "dist"
@@ -17,10 +17,11 @@
   "keywords": [
     "render",
     "render.com",
+    "cli",
     "env",
     "environment-variables",
-    "cli",
-    "dotenv"
+    "dotenv",
+    "deploy"
   ],
   "scripts": {
     "build": "tsup",

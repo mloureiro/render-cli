@@ -1,12 +1,14 @@
-import { readFile } from "node:fs/promises";
 import { CommanderError } from "commander";
 import { createClient } from "./client.js";
-import { confirm, promptHidden, readAll } from "./io.js";
+import { ask, confirm, promptHidden, readAll } from "./io.js";
 import { buildProgram } from "./program.js";
+import { files, system } from "./system.js";
 
 const program = buildProgram({
   env: process.env,
   createClient,
+  files,
+  system,
   io: {
     out: (line) => process.stdout.write(`${line}\n`),
     err: (line) => process.stderr.write(`${line}\n`),
@@ -14,7 +16,7 @@ const program = buildProgram({
     readStdin: () => readAll(process.stdin),
     promptHidden,
     confirm,
-    readFile: (path) => readFile(path, "utf8"),
+    ask,
   },
 });
 

@@ -6,8 +6,8 @@ export interface Io {
   stdinIsTTY: boolean;
   readStdin(): Promise<string>;
   promptHidden(question: string): Promise<string>;
-  confirm(question: string): Promise<boolean>;
-  readFile(path: string): Promise<string>;
+  confirm(question: string, defaultYes?: boolean): Promise<boolean>;
+  ask(question: string): Promise<string>;
 }
 
 export async function readAll(stream: NodeJS.ReadableStream): Promise<string> {
@@ -48,12 +48,17 @@ export function promptHidden(question: string): Promise<string> {
   });
 }
 
-export function confirm(question: string): Promise<boolean> {
+export function ask(question: string): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stderr });
   return new Promise((resolve) => {
-    rl.question(`${question} [y/N] `, (answer) => {
+    rl.question(question, (answer) => {
       rl.close();
-      resolve(/^y(es)?$/i.test(answer.trim()));
+      resolve(answer);
     });
   });
+}
+
+export async function confirm(question: string, defaultYes = false): Promise<boolean> {
+  const answer = (await ask(`${question} ${defaultYes ? "[Y/n]" : "[y/N]"} `)).trim();
+  return answer === "" ? defaultYes : /^y(es)?$/i.test(answer);
 }
