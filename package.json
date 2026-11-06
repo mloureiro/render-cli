@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "Manage Render.com services from the command line: environment variables, credentials setup and more",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mloureiro/render-cli.git"
+  },
+  "homepage": "https://github.com/mloureiro/render-cli#readme",
+  "bugs": {
+    "url": "https://github.com/mloureiro/render-cli/issues"
+  },
   "type": "module",
   "bin": {
     "render-cli": "dist/cli.js"
