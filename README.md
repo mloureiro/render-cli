@@ -5,7 +5,7 @@ Manage [Render](https://render.com) services from the command line, through the 
 It complements the official `render` CLI, starting with what that one cannot do: managing the environment variables of an existing service.
 
 ```bash
-npm install -g rendercli
+npm install -g @mloureiro/render-cli
 render-cli setup
 render-cli env -s my-api list
 ```
@@ -17,10 +17,10 @@ Requires Node.js 20.12 or newer.
 Install it globally once and the `render-cli` command is on your `PATH`:
 
 ```bash
-npm install -g rendercli
+npm install -g @mloureiro/render-cli
 ```
 
-To try it without installing, prefix commands with `npx`: `npx rendercli env -s my-api list`.
+To try it without installing, prefix commands with `npx`: `npx @mloureiro/render-cli env -s my-api list`.
 
 ## Authentication
 
