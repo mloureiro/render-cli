@@ -11,6 +11,7 @@ const cms: Service = {
   branch: "main",
   rootDir: "cms",
   autoDeploy: "yes",
+  autoDeployTrigger: "checksPass",
   serviceDetails: {
     runtime: "node",
     url: "https://tunadao-cms.onrender.com",
@@ -53,7 +54,7 @@ describe("services get", () => {
       "repo:           https://github.com/me/site",
       "branch:         main",
       "root dir:       cms",
-      "auto-deploy:    yes",
+      "auto-deploy:    checksPass",
       "build command:  npm ci && npm run build",
       "start command:  npm start",
       "url:            https://tunadao-cms.onrender.com",

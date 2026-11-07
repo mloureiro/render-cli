@@ -24,7 +24,7 @@ function describeService(service: Service): string[] {
     ["repo", service.repo],
     ["branch", service.branch],
     ["root dir", service.rootDir || undefined],
-    ["auto-deploy", service.autoDeploy],
+    ["auto-deploy", service.autoDeployTrigger ?? service.autoDeploy],
     ["build command", native.buildCommand ?? serviceDetails.buildCommand],
     ["start command", native.startCommand],
     ["pre-deploy command", native.preDeployCommand],
