@@ -17,6 +17,7 @@ export interface Service {
   branch?: string;
   rootDir?: string;
   autoDeploy?: string;
+  autoDeployTrigger?: string;
   suspended?: string;
   dashboardUrl?: string;
   serviceDetails?: ServiceDetails;
@@ -45,6 +46,15 @@ export interface Workspace {
   name: string;
   email?: string;
   type?: string;
+}
+
+export interface ServiceUpdate {
+  rootDir?: string;
+  autoDeployTrigger?: "commit" | "off";
+  serviceDetails?: {
+    buildCommand?: string;
+    envSpecificDetails?: { buildCommand?: string; startCommand?: string };
+  };
 }
 
 export interface Deploy {
@@ -112,6 +122,7 @@ export interface RenderClient {
   triggerDeploy(serviceId: string): Promise<Deploy | undefined>;
   listWorkspaces(): Promise<Workspace[]>;
   listServices(): Promise<Service[]>;
+  updateService(serviceId: string, update: ServiceUpdate): Promise<Service>;
   listDeploys(serviceId: string, limit: number): Promise<Deploy[]>;
   getDeploy(serviceId: string, deployId: string): Promise<Deploy | undefined>;
   listLogs(query: LogQuery): Promise<LogPage>;
@@ -177,6 +188,12 @@ export function createClient(options: ClientOptions): RenderClient {
 
   return {
     listServices: () => paginate<Service, "service">("/services", "service"),
+
+    async updateService(serviceId, update) {
+      const response = await request("PATCH", servicePath(serviceId), update);
+      if (!response.ok) await fail(response, `Failed to update service ${serviceId}`);
+      return (await response.json()) as Service;
+    },
 
     async listDeploys(serviceId, limit) {
       const path = `${servicePath(serviceId)}/deploys?limit=${limit}`;

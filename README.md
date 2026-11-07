@@ -124,6 +124,25 @@ render-cli services get my-api           # runtime, repo, branch, root dir, auto
 render-cli services get srv-abc --json
 ```
 
+### `services update <id-or-name>`
+
+Changes the settings a build uses. It prints the changed fields first and then asks for confirmation; `--dry-run` stops after the diff, and `--yes` skips the question (required outside a terminal).
+
+```bash
+render-cli services update my-api --root-dir "" --dry-run
+render-cli services update my-api --build-command "npm ci && npm run build -w cms" --start-command "npm run start -w cms"
+render-cli services update my-api --auto-deploy no --yes
+```
+
+| Flag                                | Render field                                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `--root-dir <dir>` (`""` clears it) | `rootDir`                                                                                         |
+| `--build-command <cmd>`             | `serviceDetails.envSpecificDetails.buildCommand` (`serviceDetails.buildCommand` for static sites) |
+| `--start-command <cmd>`             | `serviceDetails.envSpecificDetails.startCommand`                                                  |
+| `--auto-deploy yes\|no`             | `autoDeployTrigger: commit\|off`                                                                  |
+
+Only fields whose value changes are sent. Build and start commands are rejected for Docker and image-backed services.
+
 ## Deploys: `render-cli deploys`
 
 Takes the same `--service` (`-s`) / `RENDER_SERVICE` as `env`.

@@ -195,3 +195,17 @@ describe("listLogs", () => {
     });
   });
 });
+
+describe("updateService", () => {
+  it("PATCHes the service with the given body", async () => {
+    const { calls, fetch } = fakeFetch(() =>
+      json({ id: "srv-abc", name: "cms", type: "web_service" }),
+    );
+    const client = createClient({ apiKey: API_KEY, fetch });
+
+    await client.updateService("srv-abc", { rootDir: "" });
+
+    expect(calls[0]).toMatchObject({ method: "PATCH", body: { rootDir: "" } });
+    expect(calls[0]?.url.pathname).toBe("/v1/services/srv-abc");
+  });
+});

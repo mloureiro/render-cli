@@ -6,6 +6,7 @@ import type {
   LogQuery,
   RenderClient,
   Service,
+  ServiceUpdate,
   Workspace,
 } from "../src/client.js";
 import type { ProgramDeps } from "../src/context.js";
@@ -58,6 +59,11 @@ export function harness(options: HarnessOptions = {}) {
       (options.services ?? []).find((service) => service.id === id),
     ),
     listServices: vi.fn(async () => options.services ?? []),
+    updateService: vi.fn(async (id: string, _update: ServiceUpdate) => {
+      const service = (options.services ?? []).find((candidate) => candidate.id === id);
+      if (!service) throw new Error(`unknown service ${id}`);
+      return service;
+    }),
     listDeploys: vi.fn(async (_id: string, limit: number) =>
       (options.deploys ?? []).slice(0, limit),
     ),
