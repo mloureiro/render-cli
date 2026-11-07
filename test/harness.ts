@@ -1,5 +1,13 @@
 import { vi } from "vitest";
-import type { ClientOptions, RenderClient, Service, Workspace } from "../src/client.js";
+import type {
+  ClientOptions,
+  Deploy,
+  LogPage,
+  LogQuery,
+  RenderClient,
+  Service,
+  Workspace,
+} from "../src/client.js";
 import type { ProgramDeps } from "../src/context.js";
 import { buildProgram } from "../src/program.js";
 
@@ -20,6 +28,9 @@ export interface HarnessOptions {
   openUrl?: boolean;
   now?: number;
   listWorkspaces?: RenderClient["listWorkspaces"];
+  deploys?: Deploy[];
+  getDeploy?: RenderClient["getDeploy"];
+  logPages?: LogPage[];
 }
 
 export function harness(options: HarnessOptions = {}) {
@@ -29,6 +40,7 @@ export function harness(options: HarnessOptions = {}) {
   const out: string[] = [];
   const err: string[] = [];
   const clientOptions: ClientOptions[] = [];
+  let logCalls = 0;
 
   const client = {
     listEnvVars: vi.fn(async () => [...store].map(([key, value]) => ({ key, value }))),
@@ -42,7 +54,23 @@ export function harness(options: HarnessOptions = {}) {
       return { key, value };
     }),
     deleteEnvVar: vi.fn(async (_id: string, key: string) => store.delete(key)),
-    getService: vi.fn(async () => undefined),
+    getService: vi.fn(async (id: string) =>
+      (options.services ?? []).find((service) => service.id === id),
+    ),
+    listServices: vi.fn(async () => options.services ?? []),
+    listDeploys: vi.fn(async (_id: string, limit: number) =>
+      (options.deploys ?? []).slice(0, limit),
+    ),
+    getDeploy: vi.fn(
+      options.getDeploy ??
+        (async (_id: string, deployId: string) =>
+          (options.deploys ?? []).find((deploy) => deploy.id === deployId)),
+    ),
+    listLogs: vi.fn(async (_query: LogQuery) => {
+      const pages = options.logPages ?? [];
+      const page = pages[logCalls++] ?? { logs: [], hasMore: false };
+      return page;
+    }),
     findServicesByName: vi.fn(async (name: string) =>
       (options.services ?? []).filter((service) => service.name === name),
     ),
@@ -66,6 +94,7 @@ export function harness(options: HarnessOptions = {}) {
   const system = {
     homeDir: HOME,
     now: () => options.now ?? Date.UTC(2026, 10, 6),
+    sleep: vi.fn(async (_ms: number) => {}),
     openUrl: vi.fn(async () => options.openUrl ?? true),
     isGitIgnored: vi.fn(async () => options.gitIgnored),
   };

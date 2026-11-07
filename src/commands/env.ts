@@ -1,47 +1,17 @@
 import type { Command } from "commander";
-import type { RenderClient } from "../client.js";
 import { type ProgramDeps, UsageError } from "../context.js";
-import { requireApiKey } from "../credentials.js";
 import { diffEnv, parseEnvFile } from "../env-file.js";
+import { resolveTarget, serviceRef, type Target, withServiceOption } from "../target.js";
 
 const MASK = "********";
-const SERVICE_ID_PATTERN = /^(srv|crn)-[a-z0-9]+$/;
-
-interface Target {
-  client: RenderClient;
-  serviceId: string;
-  label: string;
-}
 
 export function registerEnvCommands(program: Command, deps: ProgramDeps): void {
-  const { io, env } = deps;
-  const envCommand = program
-    .command("env")
-    .description("manage the environment variables of a service")
-    .option(
-      "-s, --service <id-or-name>",
-      "service ID (srv-…) or exact service name; defaults to $RENDER_SERVICE",
-    );
+  const { io } = deps;
+  const envCommand = withServiceOption(
+    program.command("env").description("manage the environment variables of a service"),
+  );
 
-  async function target(): Promise<Target> {
-    const ref = (envCommand.opts<{ service?: string }>().service ?? env.RENDER_SERVICE)?.trim();
-    if (!ref)
-      throw new UsageError("Missing service: pass --service <id-or-name> or set RENDER_SERVICE");
-
-    const client = deps.createClient({ apiKey: await requireApiKey(deps) });
-    if (SERVICE_ID_PATTERN.test(ref)) return { client, serviceId: ref, label: ref };
-
-    const matches = await client.findServicesByName(ref);
-    const [match] = matches;
-    if (matches.length === 1 && match) {
-      return { client, serviceId: match.id, label: `${match.name} (${match.id})` };
-    }
-    if (matches.length === 0) throw new UsageError(`No service named "${ref}"`);
-    const ids = matches.map((service) => service.id).join(", ");
-    throw new UsageError(
-      `Several services are named "${ref}" (${ids}); pass the service ID instead`,
-    );
-  }
+  const target = () => resolveTarget(deps, serviceRef(envCommand, deps));
 
   async function deployIfRequested(
     shouldDeploy: boolean | undefined,

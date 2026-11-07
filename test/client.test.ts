@@ -156,3 +156,42 @@ describe("triggerDeploy", () => {
     expect(calls[0]?.url.pathname).toBe("/v1/services/srv-abc/deploys");
   });
 });
+
+describe("listDeploys", () => {
+  it("unwraps the deploys of one page of the given size", async () => {
+    const { calls, fetch } = fakeFetch(() =>
+      json([{ deploy: { id: "dep-1", status: "live" }, cursor: "c1" }]),
+    );
+    const client = createClient({ apiKey: API_KEY, fetch });
+
+    expect(await client.listDeploys("srv-abc", 5)).toEqual([{ id: "dep-1", status: "live" }]);
+    expect(calls[0]?.url.pathname).toBe("/v1/services/srv-abc/deploys");
+    expect(calls[0]?.url.search).toBe("?limit=5");
+  });
+});
+
+describe("listLogs", () => {
+  it("sends the owner, resource and window as query parameters", async () => {
+    const { calls, fetch } = fakeFetch(() => json({ logs: [], hasMore: false }));
+    const client = createClient({ apiKey: API_KEY, fetch });
+
+    await client.listLogs({
+      ownerId: "tea-1",
+      resource: "srv-abc",
+      type: "build",
+      startTime: "2026-11-07T09:00:00Z",
+      direction: "forward",
+      limit: 50,
+    });
+
+    expect(calls[0]?.url.pathname).toBe("/v1/logs");
+    expect(Object.fromEntries(calls[0]?.url.searchParams ?? [])).toEqual({
+      ownerId: "tea-1",
+      resource: "srv-abc",
+      type: "build",
+      startTime: "2026-11-07T09:00:00Z",
+      direction: "forward",
+      limit: "50",
+    });
+  });
+});

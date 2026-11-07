@@ -2,7 +2,7 @@
 
 Manage [Render](https://render.com) services from the command line, through the [Render REST API](https://api-docs.render.com).
 
-It complements the official `render` CLI, starting with what that one cannot do: managing the environment variables of an existing service.
+It complements the official `render` CLI: managing the environment variables of an existing service, and inspecting services, deploys and logs from scripts.
 
 ```bash
 npm install -g @mloureiro/render-cli
@@ -115,6 +115,38 @@ Variables are written one at a time with `PUT /services/{id}/env-vars/{key}`. Th
 ### Limitations
 
 Only variables set directly on a service are managed. Variables that come from a linked environment group are not listed or changed.
+
+## Services: `render-cli services`
+
+```bash
+render-cli services list                 # name, ID, type, suspended state, URL
+render-cli services get my-api           # runtime, repo, branch, root dir, auto-deploy, build/start commands
+render-cli services get srv-abc --json
+```
+
+## Deploys: `render-cli deploys`
+
+Takes the same `--service` (`-s`) / `RENDER_SERVICE` as `env`.
+
+```bash
+render-cli deploys -s my-api list              # ID, status, trigger, created/finished, commit
+render-cli deploys -s my-api list --limit 30
+render-cli deploys -s my-api get dep-abc123    # status, commit, timings, duration
+render-cli deploys -s my-api wait dep-abc123   # polls until live; exits 1 on failure
+```
+
+`wait` checks every 5 seconds (`--interval`) for up to 30 minutes (`--timeout`). It exits 0 when the deploy is `live`, and 1 when it ends as `build_failed`, `update_failed`, `pre_deploy_failed`, `canceled` or `deactivated`, or when it times out.
+
+## Logs: `render-cli logs`
+
+```bash
+render-cli logs -s my-api                              # last 100 lines
+render-cli logs -s my-api --deploy dep-abc123          # lines from that deploy's build and rollout
+render-cli logs -s my-api --type build --limit 500
+render-cli logs -s my-api --since 2026-11-07T09:00:00Z --until 2026-11-07T10:00:00Z
+```
+
+Lines print oldest first as `timestamp [type] message`. Render's logs API has no deploy filter, so `--deploy` limits the query to the time window from the deploy's start until one minute after it finished.
 
 ## Security notes
 

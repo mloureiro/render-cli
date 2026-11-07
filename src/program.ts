@@ -1,6 +1,9 @@
 import { Command } from "commander";
 import packageJson from "../package.json" with { type: "json" };
+import { registerDeploysCommands } from "./commands/deploys.js";
 import { registerEnvCommands } from "./commands/env.js";
+import { registerLogsCommand } from "./commands/logs.js";
+import { registerServicesCommands } from "./commands/services.js";
 import { registerSetupCommand } from "./commands/setup.js";
 import type { ProgramDeps } from "./context.js";
 
@@ -17,5 +20,8 @@ export function buildProgram(deps: ProgramDeps): Command {
 
   registerSetupCommand(program, deps);
   registerEnvCommands(program, deps);
+  registerServicesCommands(program, deps);
+  registerDeploysCommands(program, deps);
+  registerLogsCommand(program, deps);
   return program;
 }

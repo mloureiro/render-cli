@@ -12,6 +12,32 @@ export interface Service {
   name: string;
   type: string;
   slug?: string;
+  ownerId?: string;
+  repo?: string;
+  branch?: string;
+  rootDir?: string;
+  autoDeploy?: string;
+  suspended?: string;
+  dashboardUrl?: string;
+  serviceDetails?: ServiceDetails;
+}
+
+export interface ServiceDetails {
+  url?: string;
+  runtime?: string;
+  plan?: string;
+  region?: string;
+  buildCommand?: string;
+  publishPath?: string;
+  healthCheckPath?: string;
+  envSpecificDetails?: {
+    buildCommand?: string;
+    startCommand?: string;
+    preDeployCommand?: string;
+    dockerfilePath?: string;
+    dockerContext?: string;
+    dockerCommand?: string;
+  };
 }
 
 export interface Workspace {
@@ -24,6 +50,37 @@ export interface Workspace {
 export interface Deploy {
   id: string;
   status?: string;
+  trigger?: string;
+  commit?: { id?: string; message?: string; createdAt?: string };
+  image?: { ref?: string; sha?: string };
+  createdAt?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  updatedAt?: string;
+}
+
+export interface LogEntry {
+  id: string;
+  message: string;
+  timestamp: string;
+  labels: Array<{ name: string; value: string }>;
+}
+
+export interface LogQuery {
+  ownerId: string;
+  resource: string;
+  type?: string;
+  startTime?: string;
+  endTime?: string;
+  direction?: "forward" | "backward";
+  limit?: number;
+}
+
+export interface LogPage {
+  logs: LogEntry[];
+  hasMore: boolean;
+  nextStartTime?: string;
+  nextEndTime?: string;
 }
 
 export type EnvVarInput = { value: string } | { generateValue: true };
@@ -54,6 +111,10 @@ export interface RenderClient {
   findServicesByName(name: string): Promise<Service[]>;
   triggerDeploy(serviceId: string): Promise<Deploy | undefined>;
   listWorkspaces(): Promise<Workspace[]>;
+  listServices(): Promise<Service[]>;
+  listDeploys(serviceId: string, limit: number): Promise<Deploy[]>;
+  getDeploy(serviceId: string, deployId: string): Promise<Deploy | undefined>;
+  listLogs(query: LogQuery): Promise<LogPage>;
 }
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -112,7 +173,41 @@ export function createClient(options: ClientOptions): RenderClient {
   const envVarPath = (serviceId: string, key: string) =>
     `/services/${encodeURIComponent(serviceId)}/env-vars/${encodeURIComponent(key)}`;
 
+  const servicePath = (serviceId: string) => `/services/${encodeURIComponent(serviceId)}`;
+
   return {
+    listServices: () => paginate<Service, "service">("/services", "service"),
+
+    async listDeploys(serviceId, limit) {
+      const path = `${servicePath(serviceId)}/deploys?limit=${limit}`;
+      const response = await request("GET", path);
+      if (!response.ok) await fail(response, "Failed to list deploys");
+      const page = (await response.json()) as Array<{ deploy: Deploy }>;
+      return page.map((entry) => entry.deploy);
+    },
+
+    async getDeploy(serviceId, deployId) {
+      const response = await request(
+        "GET",
+        `${servicePath(serviceId)}/deploys/${encodeURIComponent(deployId)}`,
+      );
+      if (response.status === 404) return undefined;
+      if (!response.ok) await fail(response, `Failed to read deploy ${deployId}`);
+      return (await response.json()) as Deploy;
+    },
+
+    async listLogs(query) {
+      const params = new URLSearchParams({ ownerId: query.ownerId, resource: query.resource });
+      if (query.type) params.append("type", query.type);
+      if (query.startTime) params.append("startTime", query.startTime);
+      if (query.endTime) params.append("endTime", query.endTime);
+      if (query.direction) params.append("direction", query.direction);
+      if (query.limit) params.append("limit", String(query.limit));
+      const response = await request("GET", `/logs?${params}`);
+      if (!response.ok) await fail(response, "Failed to read logs");
+      return (await response.json()) as LogPage;
+    },
+
     listWorkspaces: () => paginate<Workspace, "owner">("/owners", "owner"),
 
     listEnvVars: (serviceId) =>

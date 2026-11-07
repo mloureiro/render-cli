@@ -28,6 +28,7 @@ function openCommand(url: string): [string, string[]] {
 export const system: System = {
   homeDir: homedir(),
   now: () => Date.now(),
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   openUrl(url) {
     const [command, args] = openCommand(url);
     return new Promise((resolve) => {

@@ -9,6 +9,7 @@ export interface Files {
 export interface System {
   homeDir: string;
   now(): number;
+  sleep(ms: number): Promise<void>;
   openUrl(url: string): Promise<boolean>;
   isGitIgnored(path: string): Promise<boolean | undefined>;
 }
